@@ -32,6 +32,7 @@ int inf_int::compare_abs(const inf_int &n1, const inf_int &n2) {
         if(n1.digits[i] > n2.digits[i]) return 1;
         else if(n2.digits[i] > n1.digits[i]) return -1;
     }
+    return 0;
 }
 
 inf_int::inf_int() {
@@ -130,7 +131,7 @@ inf_int operator+(const inf_int &n1, const inf_int &n2) {
     inf_int ret = {tmp + i};
     ret.the_sign = n1.the_sign;
 
-    delete tmp;
+    delete[] tmp;
     return ret;
 }
 
@@ -162,7 +163,7 @@ inf_int operator-(const inf_int &n1, const inf_int &n2) {
     inf_int ret = {tmp + i};
     ret.the_sign = (inf_int::compare_abs(n1, n2) < 0) ? false : true;
 
-    delete tmp;
+    delete[] tmp;
     return ret;
 }
 
