@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <vector>
+#include <complex>
+
+typedef std::complex<double> base;
 
 class inf_int
 {
@@ -16,6 +19,7 @@ private :
 
     static void swap(inf_int&, inf_int&);
     static int compare_abs(const inf_int&, const inf_int&);
+    static std::vector<int> multiply(std::vector<int> &, std::vector<int> &);
 
 public :
     inf_int();               // assign 0 as a default value

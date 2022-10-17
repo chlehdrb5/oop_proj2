@@ -1,7 +1,9 @@
 #include "inf_int.h"
 #include <cmath>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
+#include <vector>
+
 
 //
 // to be filled by students
@@ -174,25 +176,105 @@ std::ostream &operator<<(std::ostream &os, const inf_int &n) {
     return os;
 }
 
-inf_int operator*(const inf_int &n1, const inf_int &n2) {
-    inf_int sum;
-    int length = n1.length + 1;
-    for(int i=0;i<n2.length;i++){
-        char *tmp = new char[length + i + 1];
-        tmp[length + i] = 0;
-        std::fill(tmp, tmp + length + i, '0');
-        int carry = 0;
-        for(int j=0;j<length;j++){
-            int n1_digit = n1.length > j ? n1.digits[j] - '0' : 0;
-            int n2_digit = n2.digits[i] - '0';
-            tmp[j + i] = (n1_digit * n2_digit + carry) % 10 + '0';
-            carry = (n1_digit * n2_digit + carry) / 10;
+inf_int operator*(const inf_int& n1, const inf_int& n2) {
+    std::vector<int> a;
+    std::vector<int> b;
+
+    for(int i=0;i<n1.length;i++) a.push_back(n1.digits[i] - '0');
+    for(int i=0;i<n2.length;i++) b.push_back(n2.digits[i] - '0');
+
+    std::vector<int> ret = inf_int::multiply(a, b);
+    int i = 0;
+    while (i < ret.size()) {
+        if (ret[i] >= 10) {
+            if (i == ret.size() - 1)
+                ret.push_back(ret[i] / 10);
+            else
+                ret[i + 1] += ret[i] / 10;
+            ret[i] %= 10;
         }
-        std::reverse(tmp, tmp + length + i);
-        int idx=0;
-        while(idx < length + i - 1 && tmp[idx] == '0') idx++;
-        sum = sum + inf_int(tmp + idx);
-        free(tmp);
+        ++i;
     }
-    return sum;
+
+    while(!ret.empty() && ret.back() == 0) ret.pop_back();
+
+    inf_int res;
+    res.length = ret.size();
+    res.digits = new char[res.length];
+    for(int i=0;i<res.length;i++) res.digits[i] = ret[i] + '0';
+
+    res.the_sign = !(n1.the_sign ^ n2.the_sign);
+    return res;
+}
+
+//inf_int operator*(const inf_int &n1, const inf_int &n2) {
+//    inf_int sum;
+//    int length = n1.length + 1;
+//    for(int i=0;i<n2.length;i++){
+//        char *tmp = new char[length + i + 1];
+//        tmp[length + i] = 0;
+//        std::fill(tmp, tmp + length + i, '0');
+//        int carry = 0;
+//        for(int j=0;j<length;j++){
+//            int n1_digit = n1.length > j ? n1.digits[j] - '0' : 0;
+//            int n2_digit = n2.digits[i] - '0';
+//            tmp[j + i] = (n1_digit * n2_digit + carry) % 10 + '0';
+//            carry = (n1_digit * n2_digit + carry) / 10;
+//        }
+//        std::reverse(tmp, tmp + length + i);
+//        int idx=0;
+//        while(idx < length + i - 1 && tmp[idx] == '0') idx++;
+//        sum = sum + inf_int(tmp + idx);
+//        free(tmp);
+//    }
+//    return sum;
+//}
+
+void fft(std::vector<base> &a, bool inv) {
+    int n = (int)a.size();
+    for (int i = 1, j = 0; i < n; i++) {
+        int bit = n >> 1;
+        while (!((j ^= bit) & bit)) bit >>= 1;
+        if (i < j) std::swap(a[i], a[j]);
+    }
+    for (int i = 1; i < n; i <<= 1) {
+        double x = (inv ? 1 : -1) * M_PI / i;
+        base w = { cos(x), sin(x) };
+        for (int j = 0; j < n; j += i << 1) {
+            base th(1);
+            for (int k = 0; k < i; k++) {
+                base tmp = a[i + j + k] * th;
+                a[i + j + k] = a[j + k] - tmp;
+                a[j + k] += tmp;
+                th *= w;
+            }
+        }
+    }
+    if (inv) {
+        for (int i = 0; i < n; i++) a[i] /= n;
+    }
+}
+
+int power_of_2_ge_than(int n) {
+    int ret = 1;
+    while (n > ret) ret <<= 1;
+    return ret;
+}
+
+std::vector<int> inf_int::multiply(std::vector<int> &A, std::vector<int> &B) {
+    std::vector<base> a(A.begin(), A.end());
+    std::vector<base> b(B.begin(), B.end());
+    int n = power_of_2_ge_than(std::max(a.size(), b.size())) * 2;
+
+    a.resize(n);	b.resize(n);
+    fft(a, false);	fft(b, false);
+
+    for (int i = 0; i < n; i++)
+        a[i] *= b[i];
+    fft(a, true);
+
+    std::vector<int> ret(n);
+    for (int i = 0; i < n; i++)
+        ret[i] = (int)round(a[i].real());
+    return ret;
 }
