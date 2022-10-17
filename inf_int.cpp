@@ -50,6 +50,7 @@ inf_int::inf_int(int n) {
     digits = new char[length + 1];
     digits[length] = 0;
     the_sign = n >= 0;
+    n = std::abs(n);
     int idx = 0;
     while(n != 0) {
         int digit = n % 10;
