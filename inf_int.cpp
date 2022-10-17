@@ -49,6 +49,7 @@ inf_int::inf_int(int n) {
     digits[length] = 0;
     the_sign = n >= 0;
     int idx = 0;
+    n = std::abs(n);
     while (n != 0) {
         int digit = n % 10;
         n /= 10;
@@ -194,5 +195,6 @@ inf_int operator*(const inf_int& n1, const inf_int& n2) {
         sum = sum + inf_int(tmp + idx);
         delete[] tmp; // 정건우, free -> delelte
     }
+    sum.the_sign = (n1.the_sign == n2.the_sign);
     return sum;
 }
