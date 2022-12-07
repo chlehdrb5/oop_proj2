@@ -1,17 +1,16 @@
 import abc
+from membershipEnum import MembershipEnum
 
-MEMBERSHIP = ["bronze", "gold"]
 DEFAULT_POINT = 10000
 
 class NotExistedIDError(Exception):
     def __init__(self):
         super.__init__('존재하지 않는 ID입니다.')
 
-
 class User:
     def __init__(self, id):
         self.id = id
-        self.membership = MEMBERSHIP[0]
+        self.membership = MembershipEnum.BRONZE.value
         self.point = DEFAULT_POINT
         self.trade_cnt = 0
 
@@ -76,16 +75,25 @@ class UserDBInterface(metaclass=abc.ABCMeta):
     def increaseTradeCnt(self, id):
         raise NotImplemented
 
+    @abc.abstractmethod
+    def getUserList(self):
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def setMembership(self, user_id, membership):
+        raise NotImplemented
+
 class UserDBImpl(UserDBInterface):
     def __init__(self):
         self.users = {}
-        self.users['test'] = User('test')
 
     def addUser(self, id):
         if id in self.users: # id 중복
+            print("ERROR already id exists")
             return False
         else:
             self.users[id] = User(id)
+            print("create success")
             return True
 
     def getInfo(self, id):
@@ -94,13 +102,6 @@ class UserDBImpl(UserDBInterface):
         else:
             raise NotExistedIDError
         
-        # return {
-        #     "id": id,
-        #     "membership": "bronze",
-        #     "point": 10000,
-        #     "trade_cnt": 0
-        # }
-
     def setPoint(self, id, newPoint):
         if id in self.users:
             self.users[id].point = newPoint
@@ -117,3 +118,12 @@ class UserDBImpl(UserDBInterface):
             return True
         else:
             raise NotExistedIDError
+
+    def getUserList(self):
+        l = []
+        for key in self.users:
+            l.append(self.getInfo(key))
+        return l
+
+    def setMembership(self, user_id, membership):
+        self.users[user_id].membership = membership

@@ -5,20 +5,19 @@ class NotExistedRentError(Exception):
         super.__init__('존재하지 않는 대여 정보입니다.')
 
 class Rent:
-
-    def __init__(self, title, discription, deposit, daily_rent_fee, lender, uuid):
+    def __init__(self, title, description, deposit, daily_rent_fee, lender, owner, uuid):
+        self.uuid = uuid
         self.title = title
-        self.discription = discription
+        self.description = description
         self.deposit = deposit
         self.daily_rent_fee = daily_rent_fee
         self.lender = lender
-        self.uuid = uuid
+        self.owner = owner
 
     def __repr__(self):
         return str(self.__dict__)
 
 class RentDBInterface(metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def getInfo(self, uuid):
         """
@@ -56,7 +55,7 @@ class RentDBInterface(metaclass=abc.ABCMeta):
         raise NotImplemented
 
     @abc.abstractmethod
-    def getRendList(self, Lender):
+    def getLendList(self, Lender):
         """
         Lender 필드의 값이 Lender와 일치하는 모든 Rent 정보들을 리스트에 담아 반환합니다
             param
@@ -66,40 +65,44 @@ class RentDBInterface(metaclass=abc.ABCMeta):
         """
         raise NotImplemented
 
+    @abc.abstractmethod
+    def getRentList(self):
+        raise NotImplemented
 
 class RentDBImpl(RentDBInterface):
     def __init__(self):
-        self.RentDB = {'test': Rent('test')}
+        self.RentDB = {}
+        self.rentCnt = 0
 
     def getInfo(self, uuid):
-        if uuid in self.RentDB.key():
-            return self.RentDB[uuid].__dict__
+        if uuid in self.RentDB:
+            return self.RentDB[uuid]
         else:
-            raise NotExistedIDError
+            raise NotExistedRentError
 
     def createRent(self, newRent):
-        if newRent.uuid in self.RentDB.key():
-            return False
-        else:
-            self.RentDB[newRent.uuid] = newRent
-            return True
-        raise NotImplemented
+        newRent["uuid"] = self.rentCnt
+        newRent["lender"] = None
+        self.RentDB[newRent["uuid"]] = newRent
+        self.rentCnt += 1
+        return True
 
     def setLender(self, uuid, newLender):
-
-        if uuid in self.RentDB.key():
-            self.RentDB[uuid].lender = newLender
+        if uuid in self.RentDB:
+            self.RentDB[uuid]["lender"] = newLender
             return True
         else:
             return False
-        raise NotImplemented
 
-    def getRendList(self, Lender):
+    def getLendList(self, Lender):
+        l = []
+        for key in self.RentDB:
+            if self.RentDB[key]["lender"] == Lender:
+                l.append(self.RentDB[key])
+        return l
 
-        for x in self.RentDB.value():
-            if x.lender == Lender:
-                return x.__repr__
-        return False
-        raise NotImplemented
-
-
+    def getRentList(self):
+        l = []
+        for key in self.RentDB:
+            l.append(self.RentDB[key])
+        return l

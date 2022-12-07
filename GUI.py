@@ -576,5 +576,4 @@ class Rent_info(tk.Frame):
     
 ## main
 app = SampleApp()
-
 app.mainloop()

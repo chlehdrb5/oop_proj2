@@ -1,88 +1,114 @@
-import abc
-from user import UserDBImpl
+from rentDB import RentDBImpl
+from userDB import UserDBImpl
+from rentService import RentServiceImpl
+from discountPolicy import FixDiscountPolicy
+from flask_cors import CORS
 
-class RentDBInterface(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def getInfo(self, uuid):
-        """
-        매개변수로 들어온, uuid 값을 가지는 Rent 정보를 전부 dictionary 형태로, 반환합니다. eg. {title: ..., description: ..., ...}
-            param
-                uuid: 정보를 가져 오고자 하는 대여 UUID
-            return
-                Rent 정보가 담긴 dict
-        """
-        raise NotImplemented
+from flask import Flask, request
+from flask_restx import Api, Resource
 
-    @abc.abstractmethod
-    def createRent(self, newRent):
-        """
-        매개변수로 들어온, newRent를 DB상에 등록합니다
-            param
-                newRent: 새로운 대여의 정보를 가지고 있는 dictionary
-            return
-                True : 저장 성공
-                False : 저장 실패
-        """
-        raise NotImplemented
+rentDB = RentDBImpl()
+userDB = UserDBImpl()
+userDB.addUser("hyeseungmoon")
 
-    @abc.abstractmethod
-    def setLender(self, uuid, newLender):
-        """
-        uuid 값을 PK로 하는 대여항목에 Lender 필드를 갱신합니다
-            param
-                uuid: 수정하고자 하는 Rent의 uuid
-                newLender: 등록하고자 하는 유저의 id(PK)값
-            return
-                True : 성공
-                False : 실패
-        """
-        raise NotImplemented
+discountPolicy = FixDiscountPolicy()
+rentService = RentServiceImpl(rentDB, userDB, discountPolicy)
 
-    @abc.abstractmethod
-    def getRendList(self, Lender):
-        """
-        Lender 필드의 값이 Lender와 일치하는 모든 Rent 정보들을 리스트에 담아 반환합니다
-            param
-                Lender: 찾고자 하는 User id(PK)값
-            return
-                Rent 정보들의 리스트 [{}, {}, ...]
-        """
-        raise NotImplemented
+app = Flask(__name__)
+api = Api(app)
+CORS(app, resources={r'*': {'origins': '*'}})
 
-class MockRentDBImpl(RentDBInterface):
-    def getInfo(self, uuid):
-        return {
-            "UUID": uuid,
-            "title": "title",
-            "description": "lorem ipsum",
-            "deposit": 1000,
-            "daily_rent_fee": 100,
-            "lender": None,
-        }
+@api.route("/user", "/user/<string:user_id>")
+class User(Resource):
+    def get(self, user_id=""):
+        if user_id == "":
+            return userDB.getUserList()
+        return userDB.getInfo(user_id)
 
-    def createRent(self, newRent):
+    def post(self, user_id):
+        userDB.addUser(user_id)
         return True
 
-    def setLender(self, uuid, newLender):
+    def put(self):
+        user_id = request.json.get("user_id")
+        userDB.setPoint(user_id, userDB.getInfo(user_id)["point"] + 1000)
         return True
 
-    def getRendList(self, Lender):
-        return [{
-            "UUID": 0,
-            "title": "title",
-            "description": "lorem ipsum",
-            "deposit": 1000,
-            "daily_rent_fee": 100,
-            "lender": Lender,
-        }, {
-            "UUID": 1,
-            "title": "title 2",
-            "description": "lorem ipsum",
-            "deposit": 2000,
-            "daily_rent_fee": 200,
-            "lender": Lender,
-        }]
+@api.route("/rent", "/rent/<int:uuid>")
+class Rent(Resource):
+    def get(self, uuid=-1):
+        if uuid == -1:
+            return rentDB.getRentList()
+        return rentDB.getInfo(uuid)
+
+    def post(self):
+        title = request.json.get("title")
+        description = request.json.get("description")
+        deposit = int(request.json.get("deposit"))
+        daily_rent_fee = int(request.json.get("daily_rent_fee"))
+        owner = request.json.get("owner")
+        rentService.createRent(title, description, deposit, daily_rent_fee, owner)
+        return True
+
+@api.route("/order", "/order/<string:user_id>")
+class Order(Resource):
+    def get(self, user_id):
+        return rentDB.getLendList(user_id)
+
+    def post(self):
+        lender = request.json.get("lender")
+        rent_item = request.json.get("rent_item")
+        rentService.createOrder(lender, rent_item)
+
+
+
 
 if __name__ == "__main__":
+    rentDB = RentDBImpl()
     userDB = UserDBImpl()
 
+    discountPolicy = FixDiscountPolicy()
+    rentService = RentServiceImpl(rentDB, userDB, discountPolicy)
+
+    while True:
+        t = ["모든 대여 목록", "모든 유저 목록", "유저 생성", "대여 생성", "대여 주문"]
+
+        for i in range(len(t)):
+            print(i, t[i])
+
+        print("input : ", end="")
+        choice = int(input())
+        if choice == 0:
+            print(*rentDB.RentDB.values(), sep="\n")
+
+        elif choice == 1:
+            print(*userDB.users, sep="\n")
+
+        elif choice == 2:
+            print("new user id : ", end="")
+            new_user = input()
+            userDB.addUser(new_user)
+
+        elif choice == 3:
+            print("title : ", end="")
+            title = input()
+            print("description : ", end="")
+            description = input()
+            print("deposit : ", end="")
+            deposit = int(input())
+            print("daily rent fee : ", end="")
+            daily_rent_fee = int(input())
+            print("owner id : ", end="")
+            owner_id = input()
+
+            rentService.createRent(title, description, deposit, daily_rent_fee, owner_id)
+
+        elif choice == 4:
+            print("lender : ", "")
+            lender = input()
+            print("rent item uuid : ", end="")
+            rent_item = int(input())
+
+            rentService.createOrder(lender, rent_item)
+
+        print()
