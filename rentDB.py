@@ -6,21 +6,24 @@ class NotExistedRentError(Exception):
         super.__init__('존재하지 않는 대여 정보입니다.')
 
 class Rent:
-    # def __init__(self, title, description, deposit, daily_rent_fee, lender, owner, uuid):
-    #     self.uuid = uuid
-    #     self.title = title
-    #     self.description = description
-    #     self.deposit = deposit
-    #     self.daily_rent_fee = daily_rent_fee
-    #     self.lender = lender
-    #     self.owner = owner
-    #     self.rentCnt = 0
+    # def __init__(self, title, description, deposit, daily_rent_fee, lender, owner, uuid, date=20221211):
     def __init__(self, uuid, *arg, **kwargs):
-        self.rentCnt    = 0
-        self.lender     = None
-        self.uuid       = uuid
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        self.uuid = uuid
+        print(kwargs)
+        self.title = kwargs['title']
+        self.description = kwargs['description']
+        self.deposit = kwargs['deposit']
+        self.daily_rent_fee = kwargs['daily_rent_fee']
+        self.owner = kwargs['owner']
+        self.date = kwargs['date']
+        self.lender = None
+        self.rentCnt = 0
+    # def __init__(self, uuid, *arg, **kwargs):
+    #     self.rentCnt    = 0
+    #     self.lender     = None
+    #     self.uuid       = uuid
+    #     for key, value in kwargs.items():
+    #         setattr(self, key, value)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -81,35 +84,38 @@ class RentDBImpl(RentDBInterface):
     def __init__(self):
         self.RentDB = {}
         self.createRent({
-            "Title": "NoteBook",
-            "Description": "SAMSUNG",
-            "Deposit": 1000,
-            "Loan": 2000,
-            "Date": 20221225
+            "title": "NoteBook",
+            "description": "SAMSUNG",
+            "deposit": 1000,
+            "daily_rent_fee": 2000,
+            "date": 20221225,
+            "owner": 'test'
         })
         self.createRent({
-            "Title": "NoteBook",
-            "Description": "Apple",
-            "Deposit": 1500,
-            "Loan": 3000,
-            "Date": 20221230
+            "title": "NoteBook",
+            "description": "Apple",
+            "deposit": 1500,
+            "daily_rent_fee": 3000,
+            "date": 20221230,
+            "owner": 'test'
         })
         self.createRent({
-            "Title": "Umbrella",
-            "Description": "color : White",
-            "Deposit": 500,
-            "Loan": 1000,
-            "Date": 20230101
+            "title": "Umbrella",
+            "description": "color : White",
+            "deposit": 500,
+            "daily_rent_fee": 1000,
+            "date": 20230101,
+            "owner": 'test'
         })
 
         
 
     def getInfo(self, uuid):
-        print('uuid', uuid)
-        print(self.RentDB.keys())
-        print(self.RentDB[uuid])
+        # print('uuid', uuid)
+        # print(self.RentDB)
+        # print(self.RentDB[uuid])
         if uuid in self.RentDB:
-            return self.RentDB[uuid]
+            return self.RentDB[uuid].__dict__
         else:
             raise NotExistedRentError
 

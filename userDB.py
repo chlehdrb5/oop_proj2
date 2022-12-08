@@ -116,8 +116,6 @@ class UserDBImpl(UserDBInterface):
     def increaseTradeCnt(self, id):
         if id in self.users:
             self.users[id].trade_cnt += 1
-            if self.users[id].trade_cnt > 2:
-                self.setMembership(id, MembershipEnum.GOLD.value)
             return True
         else:
             raise NotExistedIDError

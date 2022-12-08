@@ -12,18 +12,10 @@ class RentServiceImpl(RentServiceInterface):
         self.userDB = userDB
         self.discountPolicy = discountPolicy
 
-    def createRent(self, title, description, deposit, daily_rent_fee, owner):
+    def createRent(self, *arg, **kwargs):
         try:
-            self.userDB.getInfo(owner)
-            self.rentDB.createRent(
-                {
-                    "title": title,
-                    "description": description,
-                    "deposit": deposit,
-                    "daily_rent_fee": daily_rent_fee,
-                    "owner": owner
-                }
-            )
+            self.userDB.getInfo(kwargs['owner'])
+            self.rentDB.createRent(kwargs)
         except:
             print("ERROR owner not found!")
 
@@ -44,5 +36,7 @@ class RentServiceImpl(RentServiceInterface):
             else:
                 print("ERROR need more point")
                 return False
-        except:
+        except Exception as e:
+            print("예외 발생 ", e)
             print("ERROR")
+            return False
