@@ -1,18 +1,26 @@
 import abc
+import uuid
 
 class NotExistedRentError(Exception):
     def __init__(self):
         super.__init__('존재하지 않는 대여 정보입니다.')
 
 class Rent:
-    def __init__(self, title, description, deposit, daily_rent_fee, lender, owner, uuid):
-        self.uuid = uuid
-        self.title = title
-        self.description = description
-        self.deposit = deposit
-        self.daily_rent_fee = daily_rent_fee
-        self.lender = lender
-        self.owner = owner
+    # def __init__(self, title, description, deposit, daily_rent_fee, lender, owner, uuid):
+    #     self.uuid = uuid
+    #     self.title = title
+    #     self.description = description
+    #     self.deposit = deposit
+    #     self.daily_rent_fee = daily_rent_fee
+    #     self.lender = lender
+    #     self.owner = owner
+    #     self.rentCnt = 0
+    def __init__(self, uuid, *arg, **kwargs):
+        self.rentCnt    = 0
+        self.lender     = None
+        self.uuid       = uuid
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -72,37 +80,63 @@ class RentDBInterface(metaclass=abc.ABCMeta):
 class RentDBImpl(RentDBInterface):
     def __init__(self):
         self.RentDB = {}
-        self.rentCnt = 0
+        self.createRent({
+            "Title": "NoteBook",
+            "Description": "SAMSUNG",
+            "Deposit": 1000,
+            "Loan": 2000,
+            "Date": 20221225
+        })
+        self.createRent({
+            "Title": "NoteBook",
+            "Description": "Apple",
+            "Deposit": 1500,
+            "Loan": 3000,
+            "Date": 20221230
+        })
+        self.createRent({
+            "Title": "Umbrella",
+            "Description": "color : White",
+            "Deposit": 500,
+            "Loan": 1000,
+            "Date": 20230101
+        })
+
+        
 
     def getInfo(self, uuid):
+        print('uuid', uuid)
+        print(self.RentDB.keys())
+        print(self.RentDB[uuid])
         if uuid in self.RentDB:
             return self.RentDB[uuid]
         else:
             raise NotExistedRentError
 
     def createRent(self, newRent):
-        newRent["uuid"] = self.rentCnt
-        newRent["lender"] = None
-        self.RentDB[newRent["uuid"]] = newRent
-        self.rentCnt += 1
+        # newRent["uuid"] = uuid.uuid1()
+        # newRent["lender"] = None
+        uuid_ = uuid.uuid1()
+        self.RentDB[str(uuid_)] = Rent(str(uuid_), **newRent)
         return True
 
     def setLender(self, uuid, newLender):
         if uuid in self.RentDB:
-            self.RentDB[uuid]["lender"] = newLender
+            self.RentDB[uuid].lender = newLender
             return True
         else:
             return False
 
     def getLendList(self, Lender):
         l = []
-        for key in self.RentDB:
-            if self.RentDB[key]["lender"] == Lender:
-                l.append(self.RentDB[key])
+        for value in self.RentDB.values():
+            if value.lender == Lender:
+                l.append(value)
         return l
 
     def getRentList(self):
-        l = []
-        for key in self.RentDB:
-            l.append(self.RentDB[key])
-        return l
+        # l = []
+        # for key in self.RentDB:
+        #     l.append(self.RentDB[key])
+        # return l
+        return list(self.RentDB.values())

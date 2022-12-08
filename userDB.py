@@ -86,6 +86,7 @@ class UserDBInterface(metaclass=abc.ABCMeta):
 class UserDBImpl(UserDBInterface):
     def __init__(self):
         self.users = {}
+        self.addUser('test')
 
     def addUser(self, id):
         if id in self.users: # id 중복
@@ -115,6 +116,8 @@ class UserDBImpl(UserDBInterface):
     def increaseTradeCnt(self, id):
         if id in self.users:
             self.users[id].trade_cnt += 1
+            if self.users[id].trade_cnt > 2:
+                self.setMembership(id, MembershipEnum.GOLD.value)
             return True
         else:
             raise NotExistedIDError
