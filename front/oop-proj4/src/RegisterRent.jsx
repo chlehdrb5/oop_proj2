@@ -1,7 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import API from "./api";
 
 const RegisterRent = () => {
   const user_id = "hyeseungmoon";
@@ -15,7 +15,7 @@ const RegisterRent = () => {
   });
 
   const handleSubmit = async () => {
-    await axios.post("http://127.0.0.1:5000/rent", newRentInfo);
+    await API.createRent(newRentInfo());
     toast.success("물품을 성공적으로 등록하였습니다!");
     navigate("/rentList");
   };

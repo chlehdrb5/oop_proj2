@@ -1,17 +1,12 @@
-import RegisterRent from "./RegisterRent";
-import RentInfo from "./RentInfo";
 import RentList from "./RentList";
-import UserInfo from "./UserInfo";
-import axios from "axios";
 import { useEffect, useState } from "react";
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import API from "./api";
 
 function App() {
   const [itemList, setItemList] = useState([]);
   useEffect(() => {
     (async () => {
-      const res = await axios.get("http://127.0.0.1:5000/rent");
-      setItemList(res.data);
+      setItemList(await API.getRentList());
     })();
   }, []);
 

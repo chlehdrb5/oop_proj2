@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { AiOutlineUser } from "react-icons/ai";
-import axios from "axios";
 import classnames from "classnames";
 import RentList from "./RentList";
 import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import API from "./api";
 
 const UserInfo = () => {
-  const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState({
     id: "hyeseungmoon",
     membership: 0,
@@ -19,16 +17,15 @@ const UserInfo = () => {
 
   useEffect(() => {
     (async () => {
-      let res = await axios.get("http://127.0.0.1:5000/user/hyeseungmoon");
-      setUserInfo(res.data);
-      setCurPoint(res.data.point);
-      res = await axios.get("http://127.0.0.1:5000/order/hyeseungmoon");
-      setCurrentRent(res.data);
+      const data = await API.getUserInfo();
+      setUserInfo(data);
+      setCurPoint(data.point);
+      setCurrentRent(await API.getOrderListWithLender());
     })();
   }, []);
 
   const handleSubmit = async () => {
-    await axios.put("http://127.0.0.1:5000/user", { user_id: "hyeseungmoon" });
+    API.increaseUserPoint();
     toast.success("1000 포인트를 적립하였습니다!");
     setCurPoint(curPoint + 1000);
   };

@@ -9,10 +9,57 @@ from flask_restx import Api, Resource
 
 rentDB = RentDBImpl()
 userDB = UserDBImpl()
-userDB.addUser("hyeseungmoon")
 
 discountPolicy = FixDiscountPolicy()
 rentService = RentServiceImpl(rentDB, userDB, discountPolicy)
+
+userDB.addUser("hyeseungmoon")
+userDB.addUser("testUser")
+rentDB.createRent({
+    "title": "귀걸이 쥬얼리 보관함 정리함",
+    "description":
+        "코스트코 유기농 루이보스에요! \n하나에 2.5g으로 보리차 끓이듯이 우려먹는 타입이에요 \n저는 많이 끓여서 물통에넣고 물대신 마셨어요 \n \n대용량 밖에 안팔아서 나머지는 당근합니당~ \n유통기한 24년5월26일",
+    "deposit": 1000,
+    "daily_rent_fee": 100,
+    "owner": "testUser"
+})
+
+rentDB.createRent({
+    "title": "화장품, 크림 (ahc,수려한)",
+    "description":
+        """
+        화장품,크림 팝니다
+        전부 새제품 미사용
+        미백주름개선 외에는 서비스
+        왼쪽,오른쪽 묶음으로 판매중
+        
+        왼쪽 (4종류:8개) 15000
+        오른쪽(2종류:2개) 15000
+        
+        (왼쪽or오) 전부(왼+오)
+        반값택배 17000 / 31000
+        집택배 19000 / 32000
+        """,
+    "deposit": 2000,
+    "daily_rent_fee": 400,
+    "owner": "testUser"
+})
+
+rentDB.createRent({
+    "title": "화장품, 크림 (ahc,수려한)",
+    "description":
+        """
+        14k 하트 원터치 귀걸이
+        핑크금
+        착용안한 새상품~
+        택배도 가능요(착불)
+        68.000원
+        """,
+    "deposit": 3000,
+    "daily_rent_fee": 400,
+    "owner": "testUser"
+})
+
 
 app = Flask(__name__)
 api = Api(app)

@@ -1,6 +1,6 @@
 import { AiOutlineUser } from "react-icons/ai";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import API from "./api";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -12,17 +12,13 @@ const RentInfo = () => {
 
   useEffect(() => {
     (async () => {
-      const res = await axios.get("http://127.0.0.1:5000/rent/" + uuid);
-      setRentInfo(res.data);
+      setRentInfo(await API.getRent(uuid));
       setLoading(false);
     })();
   }, []);
 
   const handleSubmit = async () => {
-    axios.post("http://127.0.0.1:5000/order", {
-      lender: "hyeseungmoon",
-      rent_item: rentInfo.uuid,
-    });
+    await API.createOrder(uuid);
     navigate("/userInfo");
     toast.success("대여 성공!");
   };
