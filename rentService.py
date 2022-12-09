@@ -4,6 +4,17 @@ from membershipEnum import MembershipEnum
 class RentServiceInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def createRent(self, title, description, deposit, daily_rent_fee, owner):
+        """
+        Create Rent object via rentDB.
+        """
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def createOrder(self, lender, rent_item):
+        """
+        When a lender borrows rent_item, 
+        updates the lender's points and membership information.
+        """
         raise NotImplemented
 
 class RentServiceImpl(RentServiceInterface):
@@ -12,18 +23,10 @@ class RentServiceImpl(RentServiceInterface):
         self.userDB = userDB
         self.discountPolicy = discountPolicy
 
-    def createRent(self, title, description, deposit, daily_rent_fee, owner):
+    def createRent(self, *arg, **kwargs):
         try:
-            self.userDB.getInfo(owner)
-            self.rentDB.createRent(
-                {
-                    "title": title,
-                    "description": description,
-                    "deposit": deposit,
-                    "daily_rent_fee": daily_rent_fee,
-                    "owner": owner
-                }
-            )
+            self.userDB.getInfo(kwargs['owner'])
+            self.rentDB.createRent(kwargs)
         except:
             print("ERROR owner not found!")
 
@@ -31,8 +34,8 @@ class RentServiceImpl(RentServiceInterface):
         try:
             self.userDB.getInfo(lender)
             self.rentDB.getInfo(rent_item)
-            new_point = self.userDB.getInfo(lender)["point"] - (self.rentDB.getInfo(rent_item)["deposit"] - self.discountPolicy.discount(self.userDB.getInfo(lender),
-                                                            self.rentDB.getInfo(rent_item)["deposit"]))
+            discount = self.discountPolicy.discount(self.userDB.getInfo(lender),self.rentDB.getInfo(rent_item)["deposit"])
+            new_point = self.userDB.getInfo(lender)["point"] - (self.rentDB.getInfo(rent_item)["deposit"] - discount)
             if new_point >= 0:
                 self.rentDB.setLender(rent_item, lender)
                 self.userDB.setPoint(lender, new_point)
@@ -44,5 +47,7 @@ class RentServiceImpl(RentServiceInterface):
             else:
                 print("ERROR need more point")
                 return False
-        except:
+        except Exception as e:
+            print("예외 발생 ", e)
             print("ERROR")
+            return False

@@ -8,14 +8,16 @@ import tkinter.messagebox as msgbox
 import abc
 from rentDB import RentDBInterface, RentDBImpl
 from userDB import UserDBInterface, UserDBImpl
+from discountPolicy import FixDiscountPolicy, PercentDiscountPolicy
 
 from membershipEnum import MembershipEnum
+from rentService import RentServiceInterface, RentServiceImpl
 
 #GUI 메인 창
 
 class SampleApp(tk.Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, rent_service,*args, **kwargs):
         self.__Product_info_Dict=dict() #사용자가 등록한 상품에 대한 dict
         self.__UUid_to_show=int() # 목록에서 상품을 클릭시 보여줄 상품의 uuid
         self.__UUid_to_rent=int() # 사용자가 대여한 상품의 uuid
@@ -23,8 +25,10 @@ class SampleApp(tk.Tk):
         self.geometry("480x480+500+300")
         self.resizable(False,False)
 
-        self.userDB = UserDBImpl()
-        self.id = self.userDB.getAllInfo()[0].id
+        self.rent_service = rent_service
+        self.userDB = self.rent_service.userDB
+        self.rentDB = self.rent_service.rentDB
+        self.id = self.userDB.getUserList()[0]["id"]
         self.info=self.userDB.getInfo(self.id)
 
 
@@ -39,7 +43,7 @@ class SampleApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        self.rentDB = RentDBImpl()
+        
         for F in (StartPage, Rental_Reg_Page, Loan_app_page,Prod_Info,Rent_info):
             page_name = F.__name__
             # if page_name == "Rental_Reg_Page" or page_name == "Loan_app_page":
@@ -196,13 +200,15 @@ class Rental_Reg_Page(tk.Frame):
             elif(rental_date_entry.get()=='' or not rental_date_entry.get().isdigit()):
                 msgbox.showerror("에러", "날짜를 입력해주세요!!!")
             else:
-                self.info_dict["Title"]=title_entry.get()
-                self.info_dict["Description"]=description_txt.get("1.0","end")
-                self.info_dict["Deposit"]=int(deposit_entry.get())
-                self.info_dict["Loan"]=int(loan_amount_entry.get())
-                self.info_dict["Date"]=int(rental_date_entry.get())
+                self.info_dict["title"]=title_entry.get()
+                self.info_dict["description"]=description_txt.get("1.0","end")
+                self.info_dict["deposit"]=int(deposit_entry.get())
+                self.info_dict["daily_rent_fee"]=int(loan_amount_entry.get())
+                self.info_dict["date"]=int(rental_date_entry.get())
+                self.info_dict["owner"]=TESTUSER
                 controller.set_dict(self.info_dict)
-                controller.rentDB.createRent(self.info_dict)
+                controller.rent_service.createRent(**self.info_dict)
+                # controller.rentDB.createRent(self.info_dict)
                 msgbox.showinfo("", "저장됐습니다!")
                 #print(controller.get_dict())
 
@@ -213,7 +219,6 @@ class Rental_Reg_Page(tk.Frame):
                 loan_amount_entry.delete(0, "end")
                 rental_date_entry.delete(0, "end")
                 controller.show_frame("StartPage")
-            print(self.controller.rentDB.getRentList())
                 
         save_btn=tk.Button(self,text="SAVE",font=controller.inf_font,command=btncmd)
         save_btn.grid(row=7,columnspan=2,sticky="NEWS")
@@ -251,12 +256,6 @@ class Loan_app_page(tk.Frame):
         self.table.heading("4", text="Daily rent fee", anchor="center")
         
         scrollbar.config(command=self.table.yview)
-        # self.rentDB = controller.rentDB
-        
-        # 리스트를 여기에 받았다고 가정
-        self.list_of_products=self.controller.rentDB.getRentList()
-        
-
 
         '''
         이런식으로 list of product에 들어온다고 가정
@@ -281,20 +280,19 @@ class Loan_app_page(tk.Frame):
         # print(self.list_of_products)
         temp_list=list()
         for prod in self.list_of_products:
-            if self.table.exists(prod.uuid):
+            if self.table.exists(prod['uuid']):
                 continue
             temp_list.append([
-                prod.uuid,
-                prod.Title,
-                prod.Description,
-                prod.Deposit,
-                prod.Loan,
-                prod.Date,
-                prod.lender,
+                prod['uuid'],
+                prod['title'],
+                prod['description'],
+                prod['deposit'],
+                prod['daily_rent_fee'],
+                prod['date'],
+                prod['lender'],
                 ])
 
         for val in temp_list:
-            print('val:', val[0])  
             self.table.insert("","end",values=(val),iid=val[0])
         self.update()
         
@@ -341,13 +339,8 @@ class Prod_Info(tk.Frame):
 
 
         def btncmd():
-            user_point = self.controller.userDB.getInfo(TESTUSER)["point"]
-            if user_point >= self.product.Deposit + self.product.Loan:
-                self.controller.set_UUid_to_rent(self.product.uuid)
-                # self.product.lender = TESTUSER
-                self.controller.rentDB.setLender(self.product.uuid, TESTUSER)
-                self.controller.userDB.increaseTradeCnt(TESTUSER)
-                self.controller.userDB.setPoint(TESTUSER, user_point - (self.product.Deposit + self.product.Loan))
+            self.controller.set_UUid_to_rent(self.product['uuid'])
+            if self.controller.rent_service.createOrder(TESTUSER, self.product['uuid']):
                 self.controller.show_frame("StartPage")
             else:
                 msgbox.showerror("에러", "포인트가 부족합니다.")
@@ -358,10 +351,10 @@ class Prod_Info(tk.Frame):
 
     def update_(self, userid):
         self.product = self.controller.rentDB.getInfo(self.controller.get_UUid_to_show())
-        name_of_prod=self.product.Title
-        description=self.product.Description
-        deposit=self.product.Deposit
-        daily_rent_fee=self.product.Loan
+        name_of_prod=self.product['title']
+        description=self.product['description']
+        deposit=self.product['deposit']
+        daily_rent_fee=self.product['daily_rent_fee']
         
         self.txt_title.configure(state='normal')
         self.txt_title.delete("1.0", "end")
@@ -429,16 +422,16 @@ class Rent_info(tk.Frame):
         temp_list=list()
         for prod in self.list_of_products:
 
-            if self.table.exists(prod.uuid):
+            if self.table.exists(prod['uuid']):
                 continue
             temp_list.append([
-                prod.uuid,
-                prod.Title,
-                prod.Description,
-                prod.Deposit,
-                prod.Loan,
-                prod.Date,
-                prod.lender,
+                prod['uuid'],
+                prod['title'],
+                prod['description'],
+                prod['deposit'],
+                prod['daily_rent_fee'],
+                prod['date'],
+                prod['lender'],
                 ])
 
         for val in temp_list:
@@ -451,5 +444,9 @@ if __name__ == "__main__":
     ## main
     global TESTUSER
     TESTUSER = 'test'
-    app = SampleApp()
+    userDB = UserDBImpl()
+    rentDB = RentDBImpl()
+    policy = FixDiscountPolicy()
+    rent_service = RentServiceImpl(rentDB, userDB, policy)
+    app = SampleApp(rent_service)
     app.mainloop()

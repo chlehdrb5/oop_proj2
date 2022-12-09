@@ -30,8 +30,9 @@ class UserDBInterface(metaclass=abc.ABCMeta):
     def addUser(self, id):
         """
         해당 id를 가지는 유저를 생성한다. ( 중복 검사 )
+        Create a user with the corresponding id. (duplicate check)
             param
-                id: 유저의 id
+                id: 유저의 id (User id)
             return
                 True : 성공
                 Fasle : 실패
@@ -42,17 +43,19 @@ class UserDBInterface(metaclass=abc.ABCMeta):
     def getInfo(self, id):
         """
         해당 id 를 가지는 유저 정보를 dict 형태로 반환합니다.
+        Returns the user information with the corresponding id
             param
-                id 찾고자 하는 유저 id(PK)
+                id: 찾고자 하는 유저 id(PK)
             return
-                유저 정보가 담긴 dictionary
+                유저 정보가 담긴 dictionary ( user info )
         """
         raise NotImplemented
 
     @abc.abstractmethod
     def setPoint(self, id, newPoint):
         """
-        해당 id 를 가지는 유저의 point 필드값을 newPoint로 수정합니다
+        해당 id 를 가지는 유저의 point 필드값을 newPoint로 수정합니다.
+        Set the point value of the user with the corresponding id as newPoint.
             param
                 id: 수정하고자 하는 유저의 id(PK)
                 newPoint: point의 수정값
@@ -63,24 +66,27 @@ class UserDBInterface(metaclass=abc.ABCMeta):
         raise NotImplemented
 
     @abc.abstractmethod
-    def getAllInfo(self):
-        """
-        DB에 저장된 모든 User의 Info를 반환
-            return
-                모든 유저 정보가 담긴 list
-        """
-        raise NotImplemented
-
-    @abc.abstractmethod
     def increaseTradeCnt(self, id):
+        """
+        Increase the trade_cnt value of the user with the corresponding ID.
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def getUserList(self):
+        """
+        DB에 저장된 모든 User의 Info를 반환
+        Return all User Info stored in DB
+            return
+                모든 유저 정보가 담긴 list ( al User Info )
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def setMembership(self, user_id, membership):
+        """
+        Set the membership of the user with the corresponding id.
+        """
         raise NotImplemented
 
 class UserDBImpl(UserDBInterface):
@@ -108,19 +114,14 @@ class UserDBImpl(UserDBInterface):
             self.users[id].point = newPoint
             return True
         else:
-            raise NotExistedIDError
-
-    def getAllInfo(self):
-        return list(self.users.values())
+            return False
 
     def increaseTradeCnt(self, id):
         if id in self.users:
             self.users[id].trade_cnt += 1
-            if self.users[id].trade_cnt > 2:
-                self.setMembership(id, MembershipEnum.GOLD.value)
             return True
         else:
-            raise NotExistedIDError
+            return False
 
     def getUserList(self):
         l = []
