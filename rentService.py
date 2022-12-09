@@ -4,6 +4,17 @@ from membershipEnum import MembershipEnum
 class RentServiceInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def createRent(self, title, description, deposit, daily_rent_fee, owner):
+        """
+        Create Rent object via rentDB.
+        """
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def createOrder(self, lender, rent_item):
+        """
+        When a lender borrows rent_item, 
+        updates the lender's points and membership information.
+        """
         raise NotImplemented
 
 class RentServiceImpl(RentServiceInterface):
@@ -23,8 +34,8 @@ class RentServiceImpl(RentServiceInterface):
         try:
             self.userDB.getInfo(lender)
             self.rentDB.getInfo(rent_item)
-            new_point = self.userDB.getInfo(lender)["point"] - (self.rentDB.getInfo(rent_item)["deposit"] - self.discountPolicy.discount(self.userDB.getInfo(lender),
-                                                            self.rentDB.getInfo(rent_item)["deposit"]))
+            discount = self.discountPolicy.discount(self.userDB.getInfo(lender),self.rentDB.getInfo(rent_item)["deposit"])
+            new_point = self.userDB.getInfo(lender)["point"] - (self.rentDB.getInfo(rent_item)["deposit"] - discount)
             if new_point >= 0:
                 self.rentDB.setLender(rent_item, lender)
                 self.userDB.setPoint(lender, new_point)

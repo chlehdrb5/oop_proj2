@@ -28,7 +28,7 @@ class SampleApp(tk.Tk):
         self.rent_service = rent_service
         self.userDB = self.rent_service.userDB
         self.rentDB = self.rent_service.rentDB
-        self.id = self.userDB.getAllInfo()[0].id
+        self.id = self.userDB.getUserList()[0]["id"]
         self.info=self.userDB.getInfo(self.id)
 
 
@@ -219,7 +219,6 @@ class Rental_Reg_Page(tk.Frame):
                 loan_amount_entry.delete(0, "end")
                 rental_date_entry.delete(0, "end")
                 controller.show_frame("StartPage")
-            # print(self.controller.rentDB.getRentList())
                 
         save_btn=tk.Button(self,text="SAVE",font=controller.inf_font,command=btncmd)
         save_btn.grid(row=7,columnspan=2,sticky="NEWS")
@@ -257,12 +256,6 @@ class Loan_app_page(tk.Frame):
         self.table.heading("4", text="Daily rent fee", anchor="center")
         
         scrollbar.config(command=self.table.yview)
-        # self.rentDB = controller.rentDB
-        
-        # 리스트를 여기에 받았다고 가정
-        self.list_of_products=self.controller.rentDB.getRentList()
-        
-
 
         '''
         이런식으로 list of product에 들어온다고 가정
@@ -287,16 +280,16 @@ class Loan_app_page(tk.Frame):
         # print(self.list_of_products)
         temp_list=list()
         for prod in self.list_of_products:
-            if self.table.exists(prod.uuid):
+            if self.table.exists(prod['uuid']):
                 continue
             temp_list.append([
-                prod.uuid,
-                prod.title,
-                prod.description,
-                prod.deposit,
-                prod.daily_rent_fee,
-                prod.date,
-                prod.lender,
+                prod['uuid'],
+                prod['title'],
+                prod['description'],
+                prod['deposit'],
+                prod['daily_rent_fee'],
+                prod['date'],
+                prod['lender'],
                 ])
 
         for val in temp_list:
@@ -429,16 +422,16 @@ class Rent_info(tk.Frame):
         temp_list=list()
         for prod in self.list_of_products:
 
-            if self.table.exists(prod.uuid):
+            if self.table.exists(prod['uuid']):
                 continue
             temp_list.append([
-                prod.uuid,
-                prod.title,
-                prod.description,
-                prod.deposit,
-                prod.daily_rent_fee,
-                prod.date,
-                prod.lender,
+                prod['uuid'],
+                prod['title'],
+                prod['description'],
+                prod['deposit'],
+                prod['daily_rent_fee'],
+                prod['date'],
+                prod['lender'],
                 ])
 
         for val in temp_list:

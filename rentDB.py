@@ -6,10 +6,8 @@ class NotExistedRentError(Exception):
         super.__init__('존재하지 않는 대여 정보입니다.')
 
 class Rent:
-    # def __init__(self, title, description, deposit, daily_rent_fee, lender, owner, uuid, date=20221211):
     def __init__(self, uuid, *arg, **kwargs):
         self.uuid = uuid
-        print(kwargs)
         self.title = kwargs['title']
         self.description = kwargs['description']
         self.deposit = kwargs['deposit']
@@ -18,12 +16,6 @@ class Rent:
         self.date = kwargs['date']
         self.lender = None
         self.rentCnt = 0
-    # def __init__(self, uuid, *arg, **kwargs):
-    #     self.rentCnt    = 0
-    #     self.lender     = None
-    #     self.uuid       = uuid
-    #     for key, value in kwargs.items():
-    #         setattr(self, key, value)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -32,7 +24,9 @@ class RentDBInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def getInfo(self, uuid):
         """
-        매개변수로 들어온, uuid 값을 가지는 Rent 정보를 전부 dictionary 형태로, 반환합니다. eg. {title: ..., description: ..., ...}
+        매개변수로 들어온, uuid 값을 가지는 Rent 정보를 전부 dictionary 형태로, 반환합니다.
+        Return Rent information with uuid value 
+        eg. {title: ..., description: ..., ...}
             param
                 uuid: 정보를 가져 오고자 하는 대여 UUID
             return
@@ -43,7 +37,8 @@ class RentDBInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def createRent(self, newRent):
         """
-        매개변수로 들어온, newRent를 DB상에 등록합니다
+        매개변수로 들어온, newRent를 DB상에 등록합니다.
+        create new rental information in DB
             param
                 newRent: 새로운 대여의 정보를 가지고 있는 dictionary
             return
@@ -55,7 +50,8 @@ class RentDBInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def setLender(self, uuid, newLender):
         """
-        uuid 값을 PK로 하는 대여항목에 Lender 필드를 갱신합니다
+        uuid 값을 PK로 하는 대여항목에 Lender 필드를 갱신합니다.
+        Set the lender of rent information with the corresponding uuid.
             param
                 uuid: 수정하고자 하는 Rent의 uuid
                 newLender: 등록하고자 하는 유저의 id(PK)값
@@ -68,7 +64,8 @@ class RentDBInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def getLendList(self, Lender):
         """
-        Lender 필드의 값이 Lender와 일치하는 모든 Rent 정보들을 리스트에 담아 반환합니다
+        Lender 필드의 값이 Lender와 일치하는 모든 Rent 정보들을 리스트에 담아 반환합니다.
+        Returns the list borrowed by user (lender)
             param
                 Lender: 찾고자 하는 User id(PK)값
             return
@@ -78,11 +75,15 @@ class RentDBInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def getRentList(self):
+        """
+        Returns a list of all rent informations.
+        """
         raise NotImplemented
 
 class RentDBImpl(RentDBInterface):
     def __init__(self):
         self.RentDB = {}
+        # create test data 
         self.createRent({
             "title": "NoteBook",
             "description": "SAMSUNG",
@@ -108,20 +109,13 @@ class RentDBImpl(RentDBInterface):
             "owner": 'test'
         })
 
-        
-
     def getInfo(self, uuid):
-        # print('uuid', uuid)
-        # print(self.RentDB)
-        # print(self.RentDB[uuid])
         if uuid in self.RentDB:
             return self.RentDB[uuid].__dict__
         else:
             raise NotExistedRentError
 
     def createRent(self, newRent):
-        # newRent["uuid"] = uuid.uuid1()
-        # newRent["lender"] = None
         uuid_ = uuid.uuid1()
         self.RentDB[str(uuid_)] = Rent(str(uuid_), **newRent)
         return True
@@ -137,12 +131,11 @@ class RentDBImpl(RentDBInterface):
         l = []
         for value in self.RentDB.values():
             if value.lender == Lender:
-                l.append(value)
+                l.append(value.__dict__)
         return l
 
     def getRentList(self):
-        # l = []
-        # for key in self.RentDB:
-        #     l.append(self.RentDB[key])
-        # return l
-        return list(self.RentDB.values())
+        l = []
+        for key in self.RentDB:
+            l.append(self.RentDB[key].__dict__)
+        return l
