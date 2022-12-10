@@ -32,16 +32,20 @@ class RentServiceImpl(RentServiceInterface):
 
     def createOrder(self, lender, rent_item):
         try:
-            self.userDB.getInfo(lender)
-            self.rentDB.getInfo(rent_item)
-            discount = self.discountPolicy.discount(self.userDB.getInfo(lender),self.rentDB.getInfo(rent_item)["deposit"])
-            new_point = self.userDB.getInfo(lender)["point"] - (self.rentDB.getInfo(rent_item)["deposit"] - discount)
+            user = self.userDB.getInfo(lender)
+            prod = self.rentDB.getInfo(rent_item)
+            if prod["lender"]: return False
+            deposit   = prod["deposit"]
+            daily_fee = prod["daily_rent_fee"]
+            total_fee = deposit + daily_fee * prod["date"]
+            discount  = self.discountPolicy.discount(user, total_fee)
+            total_fee = total_fee - discount
+            new_point = user["point"] - (total_fee)
             if new_point >= 0:
                 self.rentDB.setLender(rent_item, lender)
                 self.userDB.setPoint(lender, new_point)
                 self.userDB.increaseTradeCnt(lender)
-
-                if self.userDB.getInfo(lender)["trade_cnt"] >= 2:
+                if user["trade_cnt"] >= 2:
                     self.userDB.setMembership(lender, MembershipEnum.GOLD.value)
                 return True
             else:

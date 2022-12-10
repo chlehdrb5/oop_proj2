@@ -22,7 +22,7 @@ class SampleApp(tk.Tk):
         self.__UUid_to_show=int() # 목록에서 상품을 클릭시 보여줄 상품의 uuid
         self.__UUid_to_rent=int() # 사용자가 대여한 상품의 uuid
         tk.Tk.__init__(self, *args, **kwargs)
-        self.geometry("480x480+500+300")
+        self.geometry("480x600+500+300")
         self.resizable(False,False)
 
         self.rent_service = rent_service
@@ -156,30 +156,30 @@ class Rental_Reg_Page(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        welcome_label=tk.Label(self,text="대여할 상품에 대한 정보를 입력해주세요!",font=controller.title_font)
+        welcome_label=tk.Label(self,text="등록할 상품에 대한 정보를 입력해주세요!",font=controller.title_font)
         welcome_label.grid(row=0,columnspan=2)
         
-        title_label=tk.Label(self,text="제목 -> ",font=controller.inf_font)####################################
+        title_label=tk.Label(self,text="제목",font=controller.inf_font)####################################
         title_label.grid(row=1,column=0)
         title_entry= tk.Entry(self,width=50)
         title_entry.grid(row=1,column=1,sticky="NEWS")
 
-        description_label=tk.Label(self,text="설명 -> ",font=controller.inf_font)
+        description_label=tk.Label(self,text="설명",font=controller.inf_font)
         description_label.grid(row=3,column=0,sticky="NEWS")
         description_txt=tk.Text(self,width=50,height=10)
         description_txt.grid(row=3,column=1)
 
-        deposit_label=tk.Label(self,text="보증금 -> ",font=controller.inf_font)
+        deposit_label=tk.Label(self,text="보증금",font=controller.inf_font)
         deposit_label.grid(row=4,column=0)
         deposit_entry=tk.Entry(self,width=50)
         deposit_entry.grid(row=4,column=1)
 
-        loan_amount_label=tk.Label(self,text="대여금액 -> ",font=controller.inf_font)
+        loan_amount_label=tk.Label(self,text="일일대여비",font=controller.inf_font)
         loan_amount_label.grid(row=5,column=0)
         loan_amount_entry=tk.Entry(self,width=50)
         loan_amount_entry.grid(row=5,column=1)
 
-        rental_date_label=tk.Label(self,text="대여일 -> ",font=controller.inf_font)
+        rental_date_label=tk.Label(self,text="대여일",font=controller.inf_font)
         rental_date_label.grid(row=6,column=0)
         rental_date_entry=tk.Entry(self,width=50)
         rental_date_entry.grid(row=6,column=1)
@@ -239,7 +239,7 @@ class Loan_app_page(tk.Frame):
 
         scrollbar=tk.Scrollbar(self)
         scrollbar.pack(side="right",fill="y")
-        self.table=ttk.Treeview(self,height=10,columns=[0,1,2,3,4],show="headings",yscrollcommand=scrollbar.set,displaycolumns=[1,2,3,4])
+        self.table=ttk.Treeview(self,height=10,columns=[0,1,2,3,4,5],show="headings",yscrollcommand=scrollbar.set,displaycolumns=[1,2,3,4,5])
         self.table.pack()
         
         
@@ -254,6 +254,9 @@ class Loan_app_page(tk.Frame):
 
         self.table.column("4", width=100, anchor="center")
         self.table.heading("4", text="Daily rent fee", anchor="center")
+
+        self.table.column("5", width=50, anchor="center")
+        self.table.heading("5", text="On loan", anchor="center")
         
         scrollbar.config(command=self.table.yview)
 
@@ -278,18 +281,20 @@ class Loan_app_page(tk.Frame):
     def update_(self, userid):
         self.list_of_products=self.controller.rentDB.getRentList()
         # print(self.list_of_products)
+        self.table.delete(*self.table.get_children()) # reset table
         temp_list=list()
         for prod in self.list_of_products:
-            if self.table.exists(prod['uuid']):
-                continue
+            # if self.table.exists(prod['uuid']):
+            #     continue
+            
+            on_loan = 'O' if prod['lender'] else 'X'
             temp_list.append([
                 prod['uuid'],
                 prod['title'],
                 prod['description'],
                 prod['deposit'],
                 prod['daily_rent_fee'],
-                prod['date'],
-                prod['lender'],
+                on_loan
                 ])
 
         for val in temp_list:
@@ -327,12 +332,20 @@ class Prod_Info(tk.Frame):
 
 
         #############   daily_rent_fee 프레임 설정
-        labelf_name=tk.LabelFrame(self,text="수수료",font=controller.inf_font)
-        labelf_name.pack(side="top",fill='x',pady=10)
-        self.txt_fee=tk.Text(labelf_name,height=2,width=2)
+        labelf_fee=tk.LabelFrame(self,text="일일대여비",font=controller.inf_font)
+        labelf_fee.pack(side="top",fill='x',pady=10)
+        self.txt_fee=tk.Text(labelf_fee,height=2,width=2)
 
+        #############   date 프레임 설정
+        labelf_date=tk.LabelFrame(self,text="대여일",font=controller.inf_font)
+        labelf_date.pack(side="top",fill='x',pady=10)
+        self.txt_date=tk.Text(labelf_date,height=2,width=2)
 
-        
+        #############   lender 프레임 설정
+        labelf_lender=tk.LabelFrame(self,text="대여중인 사용자",font=controller.inf_font)
+        labelf_lender.pack(side="top",fill='x',pady=10)
+        self.txt_lender=tk.Text(labelf_lender,height=2,width=2)
+
         button_back = tk.Button(self, text="Back",font=controller.inf_font,width=6,
                             command=lambda: controller.show_frame("StartPage"))
         button_back.pack(side='bottom',fill='x')
@@ -343,18 +356,20 @@ class Prod_Info(tk.Frame):
             if self.controller.rent_service.createOrder(TESTUSER, self.product['uuid']):
                 self.controller.show_frame("StartPage")
             else:
-                msgbox.showerror("에러", "포인트가 부족합니다.")
+                msgbox.showerror("에러", "포인트가 부족하거나 이미 대여 중인 상품입니다.")
                 button_back.invoke()
         
         button_rent=tk.Button(self,text="빌리기",width=6,font=controller.inf_font,command=btncmd)
         button_rent.pack(side='bottom',fill='x')
 
     def update_(self, userid):
-        self.product = self.controller.rentDB.getInfo(self.controller.get_UUid_to_show())
-        name_of_prod=self.product['title']
-        description=self.product['description']
-        deposit=self.product['deposit']
-        daily_rent_fee=self.product['daily_rent_fee']
+        self.product    = self.controller.rentDB.getInfo(self.controller.get_UUid_to_show())
+        name_of_prod    = self.product['title']
+        description     = self.product['description']
+        deposit         = self.product['deposit']
+        daily_rent_fee  = self.product['daily_rent_fee']
+        lender          = self.product['lender']
+        date            = self.product['date']
         
         self.txt_title.configure(state='normal')
         self.txt_title.delete("1.0", "end")
@@ -379,6 +394,18 @@ class Prod_Info(tk.Frame):
         self.txt_fee.insert(1.0,str(daily_rent_fee))
         self.txt_fee.configure(state='disabled')
         self.txt_fee.pack(fill='both')
+
+        self.txt_date.configure(state='normal')
+        self.txt_date.delete("1.0", "end")
+        self.txt_date.insert(1.0,str(date))
+        self.txt_date.configure(state='disabled')
+        self.txt_date.pack(fill='both')
+
+        self.txt_lender.configure(state='normal')
+        self.txt_lender.delete("1.0", "end")
+        self.txt_lender.insert(1.0,str(lender))
+        self.txt_lender.configure(state='disabled')
+        self.txt_lender.pack(fill='both')
 
         self.update()
 

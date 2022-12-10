@@ -1,7 +1,7 @@
 import abc
 from membershipEnum import MembershipEnum
 
-DEFAULT_POINT = 10000
+DEFAULT_POINT = 100000
 
 class NotExistedIDError(Exception):
     def __init__(self):
