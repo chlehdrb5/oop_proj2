@@ -14,7 +14,7 @@ class Rent:
         self.daily_rent_fee = kwargs['daily_rent_fee']
         self.owner = kwargs['owner']
         self.date = kwargs['date']
-        self.lender = None
+        self.lender = ''
         self.rentCnt = 0
 
     def __repr__(self):
@@ -89,7 +89,7 @@ class RentDBImpl(RentDBInterface):
             "description": "SAMSUNG",
             "deposit": 1000,
             "daily_rent_fee": 2000,
-            "date": 20221225,
+            "date": 14,
             "owner": 'test'
         })
         self.createRent({
@@ -97,7 +97,7 @@ class RentDBImpl(RentDBInterface):
             "description": "Apple",
             "deposit": 1500,
             "daily_rent_fee": 3000,
-            "date": 20221230,
+            "date": 21,
             "owner": 'test'
         })
         self.createRent({
@@ -105,7 +105,7 @@ class RentDBImpl(RentDBInterface):
             "description": "color : White",
             "deposit": 500,
             "daily_rent_fee": 1000,
-            "date": 20230101,
+            "date": 7,
             "owner": 'test'
         })
 
